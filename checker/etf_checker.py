@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 ETF Kaufzeitpunkt-Monitor – GitHub Actions Version
@@ -7,6 +8,7 @@ sendet Telegram bei grünem Signal, generiert KI-Einschätzung.
 
 import os
 import json
+import time
 import logging
 import requests
 from datetime import datetime, timezone
@@ -180,7 +182,7 @@ def generate_ai_assessment(results: list[dict]) -> str:
                 "Content-Type":      "application/json",
             },
             json={
-                "model":      "claude-sonnet-4-20250514",
+                "model":      "claude-sonnet-4-5",
                 "max_tokens": 400,
                 "messages":   [{"role": "user", "content": prompt}],
             },
@@ -286,6 +288,9 @@ def run():
             }
         except Exception as e:
             log.error(f"Fehler bei {etf['ticker']}: {e}")
+
+        # Pause zwischen Anfragen – Alpha Vantage erlaubt max. 5/Minute
+        time.sleep(15)
 
     # KI-Einschätzung generieren
     ai_text = generate_ai_assessment(results) if results else ""
