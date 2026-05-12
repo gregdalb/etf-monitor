@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETF Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0c0f;
+    --surface:   #111418;
+    --border:    #1e2328;
+    --border2:   #2a3040;
+    --text:      #c8d0dc;
+    --muted:     #4a5568;
+    --dim:       #2d3748;
+    --green:     #00d084;
+    --green-dim: #0a2a1a;
+    --yellow:    #f6c90e;
+    --yellow-dim:#2a2200;
+    --red:       #ff4f4f;
+    --red-dim:   #2a0a0a;
+    --neutral:   #607080;
+    --neutral-dim:#151c24;
+    --accent:    #3b82f6;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ─── Layout ─────────────────────────────────── */
+  .page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ─── Header ─────────────────────────────────── */
+  header {
+    padding: 28px 0 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .header-left h1 {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: #e2e8f0;
+    letter-spacing: -0.02em;
+  }
+  .header-left p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+    font-family: var(--mono);
+  }
+  .updated-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  /* ─── Main ───────────────────────────────────── */
+  main { padding: 28px 0; }
+
+  /* ─── ETF Cards ──────────────────────────────── */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 8px 8px 0 0;
+    transition: background 0.3s;
+  }
+  .card.green  { border-color: #1a3a2a; } .card.green::before  { background: var(--green); }
+  .card.yellow { border-color: #3a2e00; } .card.yellow::before { background: var(--yellow); }
+  .card.red    { border-color: #3a1010; } .card.red::before    { background: var(--red); }
+  .card.neutral { border-color: var(--border2); } .card.neutral::before { background: var(--neutral); }
+
+  .card-header { margin-bottom: 16px; }
+  .card-name {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2px;
+  }
+  .card-ticker {
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--accent);
+  }
+
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .price {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 600;
+    color: #f0f4f8;
+    letter-spacing: -0.03em;
+  }
+  .change {
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .change.pos { color: var(--green); }
+  .change.neg { color: var(--red); }
+
+  /* Ampel */
+  .signal-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .signal-pill .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+  .signal-pill.green  { background: var(--green-dim);   color: var(--green);   } .signal-pill.green  .dot { background: var(--green); }
+  .signal-pill.yellow { background: var(--yellow-dim);  color: var(--yellow);  } .signal-pill.yellow .dot { background: var(--yellow); }
+  .signal-pill.red    { background: var(--red-dim);     color: var(--red);     } .signal-pill.red    .dot { background: var(--red); }
+  .signal-pill.neutral{ background: var(--neutral-dim); color: var(--neutral); } .signal-pill.neutral .dot { background: var(--neutral); animation: none; }
+
+  /* Metriken */
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .metric {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 3px;
+  }
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: #e2e8f0;
+  }
+  .metric-value.pos { color: var(--green); }
+  .metric-value.neg { color: var(--red); }
+
+  /* Begründungen */
+  .reasons { border-top: 1px solid var(--border); padding-top: 12px; }
+  .reason-item {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding: 2px 0;
+  }
+  .reason-item::before { content: '› '; color: var(--dim); }
+
+  /* ─── Config panel ───────────────────────────── */
+  .config-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .config-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+  }
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .config-item label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .config-row { display: flex; align-items: center; gap: 10px; }
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 2px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  .config-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: #e2e8f0;
+    min-width: 38px;
+    text-align: right;
+  }
+
+  /* ─── History strip ──────────────────────────── */
+  .history-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .history-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+  }
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .history-table th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 400;
+    padding: 0 8px 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .history-table td {
+    padding: 7px 8px 7px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .history-table tr:last-child td { border-bottom: none; }
+  .sig-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .sig-dot.green  { background: var(--green); }
+  .sig-dot.yellow { background: var(--yellow); }
+  .sig-dot.red    { background: var(--red); }
+  .sig-dot.neutral{ background: var(--neutral); }
+
+  /* ─── Footer ─────────────────────────────────── */
+  footer {
+    padding: 16px 0 20px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* ─── AI Assessment Panel ────────────────────── */
+  .ai-panel {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .ai-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .ai-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .ai-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .ai-dot.idle { background: var(--muted); animation: none; }
+  .ai-refresh-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ai-refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ai-refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ai-body {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 48px;
+  }
+  .ai-body.loading { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+  .ai-body ul { padding-left: 0; list-style: none; }
+  .ai-body li {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+  .ai-body li:last-child { border-bottom: none; }
+  .ai-body li::before { content: '›'; color: var(--accent); flex-shrink: 0; }
+  .ai-timestamp {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 10px;
+    opacity: 0.6;
+  }
+
+  /* ─── Loading / Error ────────────────────────── */
+  .loading { text-align: center; padding: 60px 20px; }
+  .loading-spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg { color: var(--red); font-family: var(--mono); font-size: 13px; }
+
+  /* ─── Refresh button ─────────────────────────── */
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .refresh-btn:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="header-left">
+      <h1>ETF · Kaufzeitpunkt-Monitor</h1>
+      <p>SPPW.DE · IS3N.DE &nbsp;|&nbsp; MA₂₀ + RSI(14) Signale</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="updated-badge" id="updated-badge">–</span>
+      <button class="refresh-btn" onclick="loadData()">↻ Reload</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="loading" id="loading">
+      <div class="loading-spinner"></div>
+      <p style="font-family:var(--mono);font-size:13px;color:var(--muted)">Lade Daten…</p>
+    </div>
+    <div id="content" style="display:none">
+      <!-- Config -->
+      <div class="config-panel">
+        <div class="config-title">Schwellenwerte (nur Anzeige – Änderung wirkt auf nächsten Serverlauf)</div>
+        <div class="config-grid">
+          <div class="config-item">
+            <label>MA-Abstand für Kaufsignal</label>
+            <div class="config-row">
+              <input type="range" id="sl-ma" min="1" max="8" step="0.5" value="3"
+                     oninput="document.getElementById('val-ma').textContent=this.value+'%';rerender()">
+              <span class="config-val" id="val-ma">3%</span>
+            </div>
+          </div>
+          <div class="config-item">
+            <label>RSI-Grenze (überverkauft)</label>
+            <div class="config-row">
+              <input type="range" id="sl-rsi" min="25" max="55" step="1" value="38"
+                     oninput="document.getElementById('val-rsi').textContent=this.value;rerender()">
+              <span class="config-val" id="val-rsi">38</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div class="cards" id="cards"></div>
+
+      <!-- AI Einschätzung -->
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <div class="ai-panel-title">
+            <span class="ai-dot idle" id="ai-dot"></span>
+            KI-Einschätzung · Kaufzeitpunkt heute
+          </div>
+          <button class="ai-refresh-btn" id="ai-btn" onclick="fetchAiAssessment()">↻ Neu laden</button>
+        </div>
+        <div class="ai-body" id="ai-body">Wird nach dem Laden der Kursdaten automatisch generiert…</div>
+        <div class="ai-timestamp" id="ai-timestamp"></div>
+      </div>
+
+      <!-- History -->
+      <div class="history-panel">
+        <div class="history-title">Signalverlauf (diese Session)</div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Zeit</th>
+              <th>ETF</th>
+              <th>Kurs</th>
+              <th>RSI</th>
+              <th>MA-Δ</th>
+              <th>Signal</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr><td colspan="6" style="color:var(--muted);font-size:11px;padding-top:10px">Wird mit jeder Aktualisierung befüllt…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Daten: Yahoo Finance (15 min Verzögerung) &nbsp;·&nbsp; Kein Anlageberatung</span>
+    <span id="next-update">Nächste Aktualisierung: –</span>
+  </footer>
+</div>
+
+<script>
+let rawData = null;
+const historyLog = [];
+
+async function loadData() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('content').style.display = 'none';
+
+  try {
+    let res = await fetch('dashboard.json?' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('no json');
+    rawData = await res.json();
+
+    if (rawData.etfs && rawData.etfs.length > 0 && rawData.updated) {
+      renderFromJson(rawData);
+    } else {
+      showWaiting();
+    }
+  } catch {
+    showWaiting();
+  }
+}
+
+function showWaiting() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+
+  // Warte-Nachricht anzeigen
+  const main = document.getElementById('main');
+  const existing = document.getElementById('waiting-msg');
+  if (existing) return;
+
+  const div = document.createElement('div');
+  div.id = 'waiting-msg';
+  div.style.cssText = 'text-align:center;padding:60px 20px;';
+  div.innerHTML = `
+    <div style="font-family:var(--mono);font-size:32px;margin-bottom:16px">⏳</div>
+    <p style="font-family:var(--mono);font-size:15px;color:#e2e8f0;margin-bottom:8px">Erste Daten werden geladen…</p>
+    <p style="font-family:var(--mono);font-size:12px;color:var(--muted);max-width:400px;margin:0 auto;line-height:1.7">
+      Die GitHub Action läuft stündlich und befüllt das Dashboard.<br>
+      Gehe zu <strong>Actions → ETF Monitor → Run workflow</strong><br>
+      um den ersten Lauf manuell auszulösen.
+    </p>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:16px;opacity:0.5">
+      Diese Seite aktualisiert sich automatisch alle 5 Minuten.
+    </p>
+  `;
+  main.appendChild(div);
+
+  // Alle 5 Minuten neu versuchen
+  setTimeout(loadData, 5 * 60 * 1000);
+}
+
+function calcMA(closes, period) {
+  if (closes.length < period) return null;
+  const sl = closes.slice(-period);
+  return sl.reduce((a, b) => a + b, 0) / period;
+}
+
+function calcRSI(closes, period) {
+  if (closes.length < period + 1) return null;
+  let gains = 0, losses = 0;
+  for (let i = closes.length - period; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    if (d > 0) gains += d; else losses -= d;
+  }
+  const ag = gains / period, al = losses / period;
+  if (al === 0) return 100;
+  return Math.round(100 - 100 / (1 + ag / al));
+}
+
+function evaluate(etf) {
+  const maThresh  = parseFloat(document.getElementById('sl-ma').value);
+  const rsiThresh = parseFloat(document.getElementById('sl-rsi').value);
+  const closes    = etf.closes || [];
+  const price     = etf.price;
+  const ma20      = calcMA(closes, 20);
+  const rsi       = calcRSI(closes, 14);
+  let score = 0;
+  const reasons = [];
+
+  let diffPct = null;
+  if (ma20) {
+    diffPct = (price - ma20) / ma20 * 100;
+    if (diffPct < -maThresh)       { score += 2; reasons.push(`Kurs ${Math.abs(diffPct).toFixed(1)}% unter MA20 ✓`); }
+    else if (diffPct < -maThresh/2){ score += 1; reasons.push(`Kurs ${Math.abs(diffPct).toFixed(1)}% unter MA20 (leicht)`); }
+    else if (diffPct > maThresh)   { score -= 2; reasons.push(`Kurs ${diffPct.toFixed(1)}% über MA20`); }
+    else                            { reasons.push(`Kurs nahe MA20 (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)`); }
+  }
+  if (rsi !== null) {
+    if (rsi < rsiThresh)            { score += 2; reasons.push(`RSI ${rsi} – überverkauft ✓`); }
+    else if (rsi < rsiThresh + 10)  { score += 1; reasons.push(`RSI ${rsi} – leicht schwach`); }
+    else if (rsi > 65)              { score -= 1; reasons.push(`RSI ${rsi} – überkauft`); }
+    else                            { reasons.push(`RSI ${rsi} – neutral`); }
+  }
+
+  let signal, label;
+  if (score >= 3)       { signal = 'green';   label = 'Günstig kaufen'; }
+  else if (score >= 1)  { signal = 'yellow';  label = 'Leicht günstig'; }
+  else if (score < 0)   { signal = 'red';     label = 'Eher teuer'; }
+  else                  { signal = 'neutral'; label = 'Neutral'; }
+
+  const changePct = etf.prev_close ? (price - etf.prev_close) / etf.prev_close * 100 : 0;
+  return { price, currency: etf.currency, changePct, ma20, diffPct, rsi, score, signal, label, reasons };
+}
+
+function renderFromJson(data) {
+  const now = new Date(data.updated);
+  document.getElementById('updated-badge').textContent =
+    'Stand: ' + now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+
+  // Sync slider defaults from server config if available
+  if (data.config) {
+    document.getElementById('sl-ma').value  = data.config.ma_threshold_pct || 3;
+    document.getElementById('sl-rsi').value = data.config.rsi_threshold    || 38;
+    document.getElementById('val-ma').textContent  = (data.config.ma_threshold_pct || 3) + '%';
+    document.getElementById('val-rsi').textContent = data.config.rsi_threshold || 38;
+  }
+
+  renderCards(data.etfs);
+  updateNextRefresh();
+}
+
+function renderCards(etfs) {
+  const container = document.getElementById('cards');
+  container.innerHTML = '';
+  const timeStr = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  for (const etf of etfs) {
+    if (etf.error) {
+      container.innerHTML += `
+        <div class="card neutral">
+          <div class="card-name">${etf.name}</div>
+          <div class="card-ticker">${etf.ticker}</div>
+          <p class="error-msg" style="margin-top:12px">Fehler: ${etf.error}</p>
+        </div>`;
+      continue;
+    }
+
+    // Falls closes noch nicht evaluiert (Server-JSON hat bereits ausgewertete Werte)
+    let ev;
+    if (etf.closes) {
+      ev = evaluate(etf);
+    } else {
+      // Aus Server-JSON: Werte direkt übernehmen, aber Slider berücksichtigen
+      ev = {
+        price:     etf.price,
+        currency:  etf.currency,
+        changePct: etf.change_pct,
+        ma20:      etf.ma20,
+        diffPct:   etf.diff_pct,
+        rsi:       etf.rsi,
+        signal:    etf.signal,
+        label:     etf.label,
+        reasons:   etf.reasons,
+      };
+    }
+
+    const changeSign = ev.changePct >= 0 ? '+' : '';
+    const changeClass = ev.changePct >= 0 ? 'pos' : 'neg';
+    const maDisplay = ev.ma20 ? ev.ma20.toFixed(2) : '–';
+    const diffDisplay = ev.diffPct !== null
+      ? `<span class="${ev.diffPct <= 0 ? 'pos' : 'neg'}">${ev.diffPct > 0 ? '+' : ''}${ev.diffPct.toFixed(1)}%</span>`
+      : '–';
+
+    container.innerHTML += `
+      <div class="card ${ev.signal}">
+        <div class="card-header">
+          <div class="card-name">${etf.name}</div>
+          <div class="card-ticker">${etf.ticker} · ${etf.isin}</div>
+        </div>
+        <div class="price-row">
+          <span class="price">${ev.price.toFixed(2)}</span>
+          <span class="change ${changeClass}">${changeSign}${ev.changePct.toFixed(2)}%</span>
+        </div>
+        <div class="signal-pill ${ev.signal}">
+          <span class="dot"></span>${ev.label}
+        </div>
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">MA 20</div>
+            <div class="metric-value">${maDisplay}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Abstand</div>
+            <div class="metric-value">${diffDisplay}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">RSI (14)</div>
+            <div class="metric-value ${ev.rsi < 38 ? 'pos' : ev.rsi > 65 ? 'neg' : ''}">${ev.rsi ?? '–'}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Score</div>
+            <div class="metric-value">${ev.signal === 'green' ? '🟢' : ev.signal === 'yellow' ? '🟡' : ev.signal === 'red' ? '🔴' : '⚪'} ${ev.score > 0 ? '+' : ''}${ev.score}</div>
+          </div>
+        </div>
+        <div class="reasons">
+          ${ev.reasons.map(r => `<div class="reason-item">${r}</div>`).join('')}
+        </div>
+      </div>`;
+
+    // History
+    historyLog.unshift({ time: timeStr, name: etf.name, ticker: etf.ticker, ev });
+  }
+
+  // KI-Einschätzung automatisch laden
+  setTimeout(fetchAiAssessment, 800);
+
+  // History table (letzte 20 Einträge)
+  const tbody = document.getElementById('history-body');
+  const rows  = historyLog.slice(0, 20);
+  if (rows.length === 0) return;
+  tbody.innerHTML = rows.map(h => `
+    <tr>
+      <td style="color:var(--muted)">${h.time}</td>
+      <td>${h.ticker}</td>
+      <td>${h.ev.price.toFixed(2)} ${h.ev.currency}</td>
+      <td>${h.ev.rsi ?? '–'}</td>
+      <td>${h.ev.diffPct !== null ? (h.ev.diffPct > 0 ? '+' : '') + h.ev.diffPct.toFixed(1) + '%' : '–'}</td>
+      <td><span class="sig-dot ${h.ev.signal}"></span>${h.ev.label}</td>
+    </tr>`).join('');
+}
+
+function rerender() {
+  if (!rawData) return;
+  renderCards(rawData.etfs);
+}
+
+function updateNextRefresh() {
+  const next = new Date(Date.now() + 3600_000);
+  document.getElementById('next-update').textContent =
+    'Nächster Serverabruf: ' + next.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Auto-reload alle 30 Minuten im Browser
+setInterval(loadData, 30 * 60 * 1000);
+loadData();
+
+// ── KI-Einschätzung ───────────────────────────────────────────────────────────
+function showAiAssessment(text) {
+  const body = document.getElementById('ai-body');
+  const dot  = document.getElementById('ai-dot');
+  const ts   = document.getElementById('ai-timestamp');
+  const btn  = document.getElementById('ai-btn');
+
+  if (!text || text.trim() === '') {
+    body.className = 'ai-body';
+    body.innerHTML = '<p style="color:var(--muted);font-family:var(--mono);font-size:12px">Noch keine Einschätzung verfügbar – wird beim nächsten stündlichen Update generiert.</p>';
+    dot.classList.add('idle');
+    return;
+  }
+
+  const lines   = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+  const bullets = lines.filter(l => /^[-•·]/.test(l));
+  const rest    = lines.filter(l => !/^[-•·]/.test(l));
+
+  let html = '';
+  if (bullets.length > 0)
+    html += '<ul>' + bullets.map(l => `<li>${l.replace(/^[-•·]\s*/, '')}</li>`).join('') + '</ul>';
+  if (rest.length > 0)
+    html += rest.map(l => `<p style="margin-top:10px;font-weight:500;color:#e2e8f0">${l}</p>`).join('');
+  if (!html) html = `<p>${text}</p>`;
+
+  body.className = 'ai-body';
+  body.innerHTML = html;
+
+  if (rawData?.updated) {
+    const d = new Date(rawData.updated);
+    ts.textContent = 'Generiert um ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) +
+                     ' · Aktualisiert stündlich durch GitHub Actions';
+  }
+  dot.classList.add('idle');
+  btn.style.display = 'none'; // Kein manueller Reload nötig
+}
+
+async function fetchAiAssessment() {
+  // Wird nicht mehr vom Browser aufgerufen – Einschätzung kommt aus dashboard.json
+  showAiAssessment(rawData?.ai_assessment || '');
+}
+</script>
+</body>
+</html>
