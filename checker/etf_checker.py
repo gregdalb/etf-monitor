@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 ETF Kaufzeitpunkt-Monitor – GitHub Actions Version
@@ -182,7 +181,7 @@ def generate_ai_assessment(results: list[dict]) -> str:
                 "Content-Type":      "application/json",
             },
             json={
-                "model":      "claude-sonnet-4-5",
+                "model":      "claude-sonnet-4-6",
                 "max_tokens": 400,
                 "messages":   [{"role": "user", "content": prompt}],
             },
