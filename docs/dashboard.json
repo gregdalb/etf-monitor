@@ -1,25 +1,24 @@
 {
-  "updated": "2026-06-18T17:52:54.275249+00:00",
+  "updated": "2026-06-19T11:11:41.168667+00:00",
   "etfs": [
     {
       "name": "MSCI World",
       "ticker": "SPPW.DEX",
       "isin": "IE00BFY0GT14",
-      "price": 45.41,
+      "price": 45.55,
       "currency": "EUR",
-      "change_pct": 0.05,
-      "ma20": 44.97,
-      "diff_pct": 0.96,
-      "rsi": 56.1,
+      "change_pct": 0.32,
+      "ma20": 45.03,
+      "diff_pct": 1.15,
+      "rsi": 56.9,
       "score": 0,
       "signal": "neutral",
       "label": "Neutral",
       "reasons": [
-        "Kurs nahe MA20 (+1.0%)",
-        "RSI 56.1 – neutral"
+        "Kurs nahe MA20 (+1.2%)",
+        "RSI 56.9 – neutral"
       ],
       "closes": [
-        43.687,
         43.688,
         43.811,
         43.546,
@@ -48,28 +47,28 @@
         44.935,
         45.43,
         45.381,
-        45.405
+        45.405,
+        45.55
       ]
     },
     {
       "name": "MSCI Emerging Markets",
       "ticker": "IS3N.DEX",
       "isin": "IE00B4L5YC18",
-      "price": 49.25,
+      "price": 50.15,
       "currency": "EUR",
-      "change_pct": 1.31,
-      "ma20": 47.68,
-      "diff_pct": 3.29,
-      "rsi": 56.8,
+      "change_pct": 1.84,
+      "ma20": 47.89,
+      "diff_pct": 4.73,
+      "rsi": 60.4,
       "score": -2,
       "signal": "red",
       "label": "Eher teuer",
       "reasons": [
-        "Kurs 3.3% über MA20",
-        "RSI 56.8 – neutral"
+        "Kurs 4.7% über MA20",
+        "RSI 60.4 – neutral"
       ],
       "closes": [
-        46.765,
         47.036,
         47.212,
         45.516,
@@ -98,7 +97,8 @@
         47.892,
         49.107,
         48.611,
-        49.247
+        49.247,
+        50.154
       ]
     }
   ],
