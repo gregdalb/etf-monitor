@@ -1,25 +1,24 @@
 {
-  "updated": "2026-11-02T23:43:56.087385+00:00",
+  "updated": "2026-11-03T14:43:09.465308+00:00",
   "etfs": [
     {
       "name": "MSCI World",
       "ticker": "SPPW.DEX",
       "isin": "IE00BFY0GT14",
-      "price": 47.46,
+      "price": 47.52,
       "currency": "EUR",
-      "change_pct": -1.35,
-      "ma20": 47.94,
-      "diff_pct": -1.01,
-      "rsi": 34.9,
-      "score": 2,
+      "change_pct": 0.14,
+      "ma20": 47.92,
+      "diff_pct": -0.83,
+      "rsi": 38.6,
+      "score": 1,
       "signal": "yellow",
       "label": "Leicht günstig",
       "reasons": [
-        "Kurs nahe MA20 (-1.0%)",
-        "RSI 34.9 – überverkauft ✓"
+        "Kurs nahe MA20 (-0.8%)",
+        "RSI 38.6 – leicht schwach"
       ],
       "closes": [
-        47.033,
         47.325,
         47.242,
         46.97,
@@ -48,7 +47,8 @@
         48.156,
         48.182,
         48.105,
-        47.456
+        47.456,
+        47.523
       ]
     },
     {
