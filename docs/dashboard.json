@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-18T16:01:11.597697+00:00",
+  "updated": "2026-11-18T23:11:48.431230+00:00",
   "etfs": [
     {
       "name": "MSCI World",
@@ -55,21 +55,20 @@
       "name": "MSCI Emerging Markets",
       "ticker": "IS3N.DEX",
       "isin": "IE00B4L5YC18",
-      "price": 43.21,
+      "price": 43.24,
       "currency": "EUR",
-      "change_pct": -2.52,
-      "ma20": 45.09,
-      "diff_pct": -4.17,
-      "rsi": 33.9,
+      "change_pct": 0.07,
+      "ma20": 44.92,
+      "diff_pct": -3.74,
+      "rsi": 36.1,
       "score": 4,
       "signal": "green",
       "label": "Günstig kaufen",
       "reasons": [
-        "Kurs 4.2% unter MA20 ✓",
-        "RSI 33.9 – überverkauft ✓"
+        "Kurs 3.7% unter MA20 ✓",
+        "RSI 36.1 – überverkauft ✓"
       ],
       "closes": [
-        49.435,
         48.584,
         48.917,
         48.749,
@@ -98,7 +97,8 @@
         45.448,
         44.998,
         44.322,
-        43.206
+        43.206,
+        43.237
       ]
     }
   ],
